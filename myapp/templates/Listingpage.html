@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Directory | CrudCipher{% endblock %}
+
+{% block content %}
+<div class="container fade-in">
+    <!-- Page Header & Action -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1 fw-bold text-dark">
+                <i class="fa-solid fa-users text-primary me-2"></i>User Records Directory
+            </h1>
+            <p class="text-muted mb-0 small">Manage, filter, and oversee registered user accounts and credentials.</p>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <a href="/Add/" class="btn btn-primary px-3 shadow-sm">
+                <i class="fa-solid fa-user-plus"></i> Add New User
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-lg-4">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper stat-icon-primary">
+                    <i class="fa-solid fa-user-group"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_count }}</div>
+                    <div class="stat-label">Total Registered Users</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper stat-icon-success">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <div>
+                    <div class="stat-value text-truncate" style="max-width: 170px;" title="{{ latest_user.name|default:'None' }}">
+                        {{ latest_user.name|default:"None" }}
+                    </div>
+                    <div class="stat-label">Latest Addition</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-4">
+            <div class="stat-card">
+                <div class="stat-icon-wrapper stat-icon-info">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <div>
+                    <div class="stat-value text-success" style="font-size: 1.45rem;">
+                        <i class="fa-solid fa-circle-check fs-6 me-1 text-success"></i>Operational
+                    </div>
+                    <div class="stat-label">Cipher Security Layer</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Table Card -->
+    <div class="custom-card mb-4">
+        <!-- Search and Filter Bar -->
+        <div class="p-3 border-bottom d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 bg-white">
+            <div class="search-input-group">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="tableSearchInput" class="form-control" placeholder="Search by name, email, or phone..." value="{{ query }}">
+                <button type="button" id="searchClearBtn" class="search-clear-btn" aria-label="Clear search">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <span class="badge badge-soft-primary px-3 py-2">
+                    Showing <span id="visibleCountBadge">{{ showing_count }}</span> of {{ total_count }} records
+                </span>
+                {% if query %}
+                    <a href="/" class="btn btn-sm btn-outline-secondary">
+                        <i class="fa-solid fa-rotate-left"></i> Reset Filter
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Records Table -->
+        <div class="custom-table-wrapper">
+            <table class="table table-custom">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;" class="text-center">#</th>
+                        <th>User Profile</th>
+                        <th>Contact Information</th>
+                        <th>Encrypted Password</th>
+                        <th>Date of Birth & Age</th>
+                        <th class="text-center" style="width: 160px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody">
+                    {% for rec in records %}
+                        <tr class="user-record-row" data-search="{{ rec.name }} {{ rec.email }} {{ rec.mobile_number }}">
+                            <td class="text-center text-muted fw-bold">{{ forloop.counter }}</td>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    {% if rec.photo %}
+                                        <img src="/media/{{ rec.photo }}" 
+                                             alt="{{ rec.name }}" 
+                                             class="user-avatar"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="user-avatar-initials" style="display:none; background: {{ rec.avatar_gradient }};">
+                                            {{ rec.initials }}
+                                        </div>
+                                    {% else %}
+                                        <div class="user-avatar-initials" style="background: {{ rec.avatar_gradient }};">
+                                            {{ rec.initials }}
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <a href="/View/{{ rec.id }}" class="text-dark fw-bold text-decoration-none d-block">
+                                            {{ rec.name }}
+                                        </a>
+                                        <span class="small text-muted">ID: #{{ rec.id }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column gap-1">
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-regular fa-envelope text-muted" style="width: 14px;"></i>
+                                        <a href="mailto:{{ rec.email }}" class="text-decoration-none text-secondary small">
+                                            {{ rec.email }}
+                                        </a>
+                                        <button class="btn btn-link p-0 text-muted copy-btn ms-1" data-copy="{{ rec.email }}" title="Copy Email">
+                                            <i class="fa-regular fa-copy small"></i>
+                                        </button>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <i class="fa-solid fa-phone text-muted" style="width: 14px;"></i>
+                                        <a href="tel:{{ rec.mobile_number }}" class="text-decoration-none text-secondary small">
+                                            {{ rec.mobile_number }}
+                                        </a>
+                                        <button class="btn btn-link p-0 text-muted copy-btn ms-1" data-copy="{{ rec.mobile_number }}" title="Copy Phone">
+                                            <i class="fa-regular fa-copy small"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="password-masked-box">
+                                    <i class="fa-solid fa-lock text-muted"></i>
+                                    <span class="password-text">••••••••</span>
+                                    <button type="button" class="peek-password-btn toggle-pwd-btn" data-password="{{ rec.password }}" title="Toggle password visibility">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="text-dark small fw-medium">
+                                        <i class="fa-regular fa-calendar text-muted me-1"></i>
+                                        {{ rec.date_of_birth|date:"M d, Y" }}
+                                    </span>
+                                    {% if rec.age %}
+                                        <span class="badge badge-soft-primary small">{{ rec.age }} yrs</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <div class="d-flex align-items-center justify-content-center gap-1">
+                                    <a href="/View/{{ rec.id }}" class="btn-action btn-action-view" title="View Details">
+                                        <i class="fa-regular fa-eye"></i>
+                                    </a>
+                                    <a href="/Edit/{{ rec.id }}" class="btn-action btn-action-edit" title="Edit User">
+                                        <i class="fa-regular fa-pen-to-square"></i>
+                                    </a>
+                                    <button type="button" 
+                                            class="btn-action btn-action-delete" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteConfirmModal"
+                                            data-user-id="{{ rec.id }}"
+                                            data-user-name="{{ rec.name }}"
+                                            data-user-email="{{ rec.email }}"
+                                            title="Delete User">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">
+                                        <i class="fa-solid fa-user-slash"></i>
+                                    </div>
+                                    <h4 class="fw-bold mb-1">No Users Found</h4>
+                                    <p class="text-muted small mb-3">No user records currently exist in the database.</p>
+                                    <a href="/Add/" class="btn btn-primary px-4">
+                                        <i class="fa-solid fa-plus me-1"></i> Create First User
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Dynamic Live Search Empty State -->
+        <div id="emptySearchState" class="empty-state" style="display: none;">
+            <div class="empty-state-icon bg-light text-muted">
+                <i class="fa-solid fa-magnifying-glass"></i>
+            </div>
+            <h5 class="fw-bold mb-1">No Matching Records</h5>
+            <p class="text-muted small mb-0">We couldn't find any users matching your search terms. Try another query.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Reusable Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="modal-header bg-danger text-white border-0 py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation fs-5"></i>
+                    <h5 class="modal-title fw-bold mb-0" id="deleteConfirmModalLabel">Confirm Deletion</h5>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center">
+                <div class="mb-3">
+                    <div class="user-avatar-initials mx-auto mb-3" style="width: 64px; height: 64px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); font-size: 1.5rem;">
+                        <i class="fa-regular fa-trash-can"></i>
+                    </div>
+                    <h5 class="fw-bold text-dark mb-1">Are you sure you want to delete this user?</h5>
+                    <p class="text-muted small mb-3">
+                        This action is irreversible. All information associated with 
+                        <strong id="modalDeleteUserName" class="text-dark">this user</strong> 
+                        (<span id="modalDeleteUserEmail" class="text-muted"></span>) will be removed.
+                    </p>
+                </div>
+                <form id="modalDeleteForm" method="post" action="">
+                    {% csrf_token %}
+                    <div class="d-flex justify-content-center gap-2">
+                        <button type="button" class="btn btn-outline-secondary px-4" data-bs-dismiss="modal">
+                            <i class="fa-solid fa-xmark me-1"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-danger px-4">
+                            <i class="fa-regular fa-trash-can me-1"></i> Confirm Delete
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edit User: {{ user.name }} | CrudCipher{% endblock %}
+
+{% block content %}
+<div class="container fade-in">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-3">
+        <ol class="breadcrumb mb-0 small">
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted"><i class="fa-solid fa-house"></i> Home</a></li>
+            <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">User Directory</a></li>
+            <li class="breadcrumb-item active text-primary fw-semibold" aria-current="page">Edit {{ user.name }}</li>
+        </ol>
+    </nav>
+
+    <div class="form-card">
+        <div class="custom-card shadow-sm">
+            <!-- Card Header -->
+            <div class="p-4 border-bottom bg-white d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="stat-icon-wrapper stat-icon-primary" style="width: 44px; height: 44px; font-size: 1.15rem;">
+                        <i class="fa-solid fa-user-pen"></i>
+                    </div>
+                    <div>
+                        <h2 class="h5 mb-0 fw-bold">Update Profile: {{ user.name }}</h2>
+                        <span class="small text-muted">Modify user details, credentials, or avatar image</span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <a href="/View/{{ user.id }}" class="btn btn-outline-info btn-sm">
+                        <i class="fa-regular fa-eye"></i> View Profile
+                    </a>
+                    <a href="/" class="btn btn-outline-secondary btn-sm">
+                        <i class="fa-solid fa-arrow-left"></i> Back
+                    </a>
+                </div>
+            </div>
+
+            <!-- Card Body / Form -->
+            <div class="p-4 bg-white">
+                <form method="post" enctype="multipart/form-data" novalidate id="editUserForm">
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors %}
+                        <div class="alert alert-danger py-2 px-3 small">
+                            {% for error in form.non_field_errors %}
+                                <div><i class="fa-solid fa-circle-exclamation me-1"></i> {{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+
+                    <!-- Current Photo & Upload Dropzone -->
+                    <div class="mb-4">
+                        <label class="form-label mb-2">
+                            <i class="fa-solid fa-image"></i> Profile Photo
+                        </label>
+                        <div class="photo-upload-box" id="photoUploadBox" onclick="document.getElementById('userPhotoInput').click();">
+                            {% if user.photo %}
+                                <img id="photoPreviewImg" src="/media/{{ user.photo }}" alt="{{ user.name }}" class="photo-preview-img">
+                                <div id="photoPreviewInitials" class="user-avatar-initials mx-auto mb-2 d-none" style="background: {{ user.avatar_gradient }}; width: 68px; height: 68px; font-size: 1.5rem;">
+                                    {{ user.initials }}
+                                </div>
+                            {% else %}
+                                <img id="photoPreviewImg" src="" alt="Preview" class="photo-preview-img d-none">
+                                <div id="photoPreviewInitials" class="user-avatar-initials mx-auto mb-2" style="background: {{ user.avatar_gradient }}; width: 68px; height: 68px; font-size: 1.5rem;">
+                                    {{ user.initials }}
+                                </div>
+                            {% endif %}
+                            <div class="fw-semibold text-dark small mb-1">Click to replace or drop new photo</div>
+                            <div class="text-muted" style="font-size: 0.775rem;">Leave untouched to keep current avatar</div>
+                        </div>
+                        <div class="d-none">
+                            {{ form.photo }}
+                        </div>
+                        {% if form.photo.errors %}
+                            <div class="text-danger small mt-1">
+                                {% for error in form.photo.errors %}
+                                    <div><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row g-3">
+                        <!-- Full Name -->
+                        <div class="col-md-6">
+                            <label for="{{ form.name.id_for_label }}" class="form-label">
+                                <i class="fa-regular fa-user"></i> Full Name <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-regular fa-user text-muted"></i></span>
+                                {{ form.name }}
+                            </div>
+                            {% if form.name.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.name.errors %}
+                                        <div><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Email Address -->
+                        <div class="col-md-6">
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                <i class="fa-regular fa-envelope"></i> Email Address <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-regular fa-envelope text-muted"></i></span>
+                                {{ form.email }}
+                            </div>
+                            {% if form.email.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.email.errors %}
+                                        <div><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Password -->
+                        <div class="col-md-6">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                <i class="fa-solid fa-key"></i> Password <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-lock text-muted"></i></span>
+                                {{ form.password }}
+                                <button type="button" class="btn btn-outline-secondary toggle-password-visibility" data-target="{{ form.password.id_for_label }}" title="Show / Hide password">
+                                    <i class="fa-regular fa-eye"></i>
+                                </button>
+                            </div>
+                            {% if form.password.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.password.errors %}
+                                        <div><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="text-muted" style="font-size: 0.775rem; margin-top: 4px;">
+                                    {{ form.password.help_text }}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Mobile Number -->
+                        <div class="col-md-6">
+                            <label for="{{ form.mobile_number.id_for_label }}" class="form-label">
+                                <i class="fa-solid fa-phone"></i> Mobile Number <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-solid fa-phone text-muted"></i></span>
+                                {{ form.mobile_number }}
+                            </div>
+                            {% if form.mobile_number.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.mobile_number.errors %}
+                                        <div><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Date of Birth -->
+                        <div class="col-12">
+                            <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">
+                                <i class="fa-regular fa-calendar"></i> Date of Birth <span class="text-danger">*</span>
+                            </label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fa-regular fa-calendar text-muted"></i></span>
+                                {{ form.date_of_birth }}
+                            </div>
+                            {% if form.date_of_birth.errors %}
+                                <div class="text-danger small mt-1">
+                                    {% for error in form.date_of_birth.errors %}
+                                        <div><i class="fa-solid fa-triangle-exclamation me-1"></i> {{ error }}</div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex align-items-center justify-content-between mt-4 pt-3 border-top">
+                        <a href="/Delete/{{ user.id }}" class="btn btn-outline-danger btn-sm">
+                            <i class="fa-regular fa-trash-can"></i> Delete Record
+                        </a>
+                        <div class="d-flex align-items-center gap-2">
+                            <a href="/" class="btn btn-outline-secondary px-3">
+                                <i class="fa-solid fa-xmark"></i> Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary px-4 shadow-sm">
+                                <i class="fa-solid fa-check"></i> Update Record
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
